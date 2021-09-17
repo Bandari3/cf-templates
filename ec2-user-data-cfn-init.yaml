@@ -1,0 +1,75 @@
+---
+Parameters:
+  MyKeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: KeyPair Name
+
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1b
+      ImageId: ami-0c2b8ca1dad447f8a
+      InstanceType: t2.micro
+      KeyName: !Ref MyKeyPair
+      SecurityGroups:
+        - !Ref SecurityGroup      
+      Tags:
+        - Key: Name
+          Value: Webserver2
+      UserData: 
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash -xe
+            # Get the latest CloudFormation package
+            yum update -y aws-cfn-bootstrap
+            # Start cfn-init
+            /opt/aws/bin/cfn-init -s ${AWS::StackId} -r MyInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'
+    Metadata:
+      Comment: Install a simple Apache HTTP page
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              httpd: []
+          files:
+            "/var/www/html/index.html":
+              content: |
+                <h1>Hello World !!</h1><br/>                
+              mode: '000644'
+          commands:
+            hello:
+              command: "echo 'hello world'"
+            updatehtml:
+              cwd: "/var/www/html"
+              command: !Sub |
+                echo "<p>Availability Zone : $(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)</p>" >> index.html
+                echo "<p>Instance Id : $(curl http://169.254.169.254/latest/meta-data/instance-id)</p>" >> index.html
+                echo "<p>Public Ip   : $(curl http://169.254.169.254/latest/meta-data/public-ipv4)</p>" >> index.html
+                echo "<p>Private Ip  : $(curl http://169.254.169.254/latest/meta-data/local-ipv4)</p>" >> index.html
+                echo "<p>Private Ip  : $(curl http://169.254.169.254/latest/meta-data/local-dns)</p>" >> index.html
+          services:
+            sysvinit:
+              httpd:
+                enabled: 'true'
+                ensureRunning: 'true'
+                
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SSH and HTTP
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+        
+Outputs:
+  PublicIp:
+    Description: PublicIP address
+    Value: !GetAtt MyInstance.PublicIp
+        
