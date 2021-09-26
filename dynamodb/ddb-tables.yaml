@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: ---
+  This template creates dynamodb tables
+
+Parameters:
+  ProjectName:
+    Description: Project Name
+    Type: String
+    Default: ddb
+
+Resources:
+  ProductCatalogTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: "PROVISIONED"
+      KeySchema:
+        - AttributeName: "Id"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "1"
+        WriteCapacityUnits: "1"
+      TableName: "ProductCatalog"
+      AttributeDefinitions:
+        - AttributeName: "Id"
+          AttributeType: "N"
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-ProductCatalog
+
+  ForumTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: "PROVISIONED"
+      KeySchema:
+        - AttributeName: "Name"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "1"
+        WriteCapacityUnits: "1"
+      TableName: "Forum"
+      AttributeDefinitions:
+        - AttributeName: "Name"
+          AttributeType: "S"
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-Forum
+
+  ThreadTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: "PROVISIONED"
+      KeySchema:
+        - AttributeName: "ForumName"
+          KeyType: "HASH"
+        - AttributeName: "Subject"
+          KeyType: "RANGE"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "1"
+        WriteCapacityUnits: "1"
+      TableName: "Thread"
+      AttributeDefinitions:
+        - AttributeName: "ForumName"
+          AttributeType: "S"
+        - AttributeName: "Subject"
+          AttributeType: "S"
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-Thread
+
+  ReplyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: "PROVISIONED"
+      KeySchema:
+        - AttributeName: "Id"
+          KeyType: "HASH"
+        - AttributeName: "ReplyDateTime"
+          KeyType: "RANGE"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "1"
+        WriteCapacityUnits: "1"
+      TableName: "Reply"
+      AttributeDefinitions:
+        - AttributeName: "Id"
+          AttributeType: "S"
+        - AttributeName: "ReplyDateTime"
+          AttributeType: "S"
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-Reply
